@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>독서기록장</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #1a1208;
+      --paper: #f5f0e8;
+      --cream: #ede7d5;
+      --amber: #c8832a;
+      --amber-light: #e8a84a;
+      --rust: #8b3a1a;
+      --muted: #8a7b65;
+      --line: #d4c9b0;
+    }
+
+    body {
+      font-family: 'Noto Serif KR', serif;
+      background-color: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      background-image:
+        repeating-linear-gradient(
+          transparent,
+          transparent 31px,
+          var(--line) 31px,
+          var(--line) 32px
+        );
+      background-size: 100% 32px;
+      background-attachment: fixed;
+    }
+
+    .wrapper {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+      position: relative;
+    }
+
+    /* Red margin line */
+    .wrapper::before {
+      content: '';
+      position: fixed;
+      left: calc(50% - 380px + 64px);
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(180, 60, 40, 0.25);
+      pointer-events: none;
+    }
+
+    /* Header */
+    header {
+      padding-left: 40px;
+      margin-bottom: 48px;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    h1 span {
+      color: var(--amber);
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    /* Form card */
+    .form-card {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 32px 32px 28px 72px;
+      margin-bottom: 40px;
+      position: relative;
+      box-shadow: 2px 3px 18px rgba(0,0,0,0.06);
+      animation: fadeDown 0.7s 0.1s ease both;
+    }
+
+    .form-card::before {
+      content: '✎';
+      position: absolute;
+      left: 22px;
+      top: 30px;
+      font-size: 22px;
+      color: var(--amber);
+      opacity: 0.7;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--line);
+      padding: 8px 2px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input::placeholder { color: #c4b89a; }
+
+    input:focus {
+      border-bottom-color: var(--amber);
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 13px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 3px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-add:hover { background: var(--rust); }
+    .btn-add:active { transform: scale(0.98); }
+
+    .btn-add::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
+    .btn-add:hover::after { transform: translateX(100%); }
+
+    /* Stats bar */
+    .stats {
+      display: flex;
+      gap: 24px;
+      padding-left: 40px;
+      margin-bottom: 32px;
+      animation: fadeDown 0.7s 0.2s ease both;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--amber);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .stat-divider {
+      width: 1px;
+      background: var(--line);
+      align-self: stretch;
+    }
+
+    /* Book list */
+    .section-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-left: 40px;
+      margin-bottom: 16px;
+      animation: fadeDown 0.7s 0.25s ease both;
+    }
+
+    .book-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .book-item {
+      background: rgba(255,255,255,0.5);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      padding: 16px 20px 16px 72px;
+      position: relative;
+      animation: slideIn 0.35s ease both;
+      transition: box-shadow 0.2s;
+    }
+
+    .book-item:hover {
+      box-shadow: 2px 3px 14px rgba(0,0,0,0.08);
+    }
+
+    .book-num {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--amber);
+      opacity: 0.8;
+    }
+
+    .book-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .book-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .book-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: #c4b89a;
+      white-space: nowrap;
+    }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ccc;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px 4px;
+      transition: color 0.2s;
+    }
+    .btn-delete:hover { color: var(--rust); }
+
+    /* Progress row */
+    .book-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-wrap {
+      flex: 1;
+    }
+
+    .progress-bar-bg {
+      height: 5px;
+      background: var(--line);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--amber), var(--amber-light));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .progress-label span {
+      color: var(--amber);
+      font-weight: bold;
+    }
+
+    /* Genre tag section */
+    .genre-section {
+      margin-bottom: 16px;
+    }
+
+    .genre-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .genre-tag {
+      padding: 5px 12px;
+      border: 1.5px solid var(--line);
+      border-radius: 99px;
+      background: transparent;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .genre-tag:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .genre-tag.selected {
+      background: var(--amber);
+      border-color: var(--amber);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .genre-tag.custom-tag.selected {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .genre-add-row {
+      display: flex;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .genre-add-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--line);
+      padding: 5px 2px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .genre-add-input::placeholder { color: #c4b89a; font-size: 12px; }
+    .genre-add-input:focus { border-bottom-color: var(--amber); }
+
+    .genre-add-btn {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1.5px solid var(--line);
+      border-radius: 99px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s;
+    }
+    .genre-add-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* Genre badge on book card */
+    .book-genre {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 99px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      background: var(--cream);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .book-item.completed .book-genre {
+      background: #d4f0de;
+      border-color: #a8dbb5;
+      color: #2e7d50;
+    }
+
+    /* Completed book card */
+    .book-item.completed {
+      background: linear-gradient(135deg, #f0faf3 60%, #e6f7ec);
+      border-color: #a8dbb5;
+      box-shadow: 0 2px 12px rgba(60, 180, 100, 0.10);
+    }
+
+    .book-item.completed:hover {
+      box-shadow: 0 4px 18px rgba(60, 180, 100, 0.18);
+    }
+
+    .book-item.completed .book-num {
+      color: #3aad6a;
+    }
+
+    .book-item.completed .book-title {
+      color: #1a3d28;
+    }
+
+    .book-item.completed .progress-bar-fill {
+      background: linear-gradient(90deg, #3aad6a, #6ed49a);
+    }
+
+    .book-item.completed .progress-label span {
+      color: #2e9958;
+    }
+
+    .check-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #3aad6a;
+      color: #fff;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 3px 9px 3px 7px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .check-badge svg {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+    }
+
+    /* Inline update controls */
+    .update-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-cur-page {
+      width: 64px;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--line);
+      padding: 4px 2px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .input-cur-page:focus { border-bottom-color: var(--amber); }
+
+    .btn-update {
+      padding: 5px 14px;
+      background: var(--amber);
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-update:hover { background: var(--rust); }
+    .btn-update:active { transform: scale(0.97); }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 18, 8, 0.45);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 36px 32px 28px;
+      width: min(400px, 90vw);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+      transform: translateY(16px) scale(0.97);
+      transition: transform 0.25s ease;
+      position: relative;
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-book-name {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 24px;
+      line-height: 1.3;
+    }
+
+    .modal-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .modal-field label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .modal-field input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--amber);
+      padding: 10px 2px;
+      font-family: 'DM Mono', monospace;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--ink);
+      outline: none;
+      text-align: center;
+    }
+
+    .modal-hint {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-hint span { color: var(--amber); }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 11px;
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-modal-cancel:hover { border-color: var(--muted); color: var(--ink); }
+
+    .btn-modal-confirm {
+      flex: 2;
+      padding: 11px;
+      background: var(--ink);
+      border: none;
+      border-radius: 3px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--paper);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-modal-confirm:hover { background: var(--rust); }
+
+    /* Tab navigation */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      margin-bottom: 36px;
+      border-bottom: 2px solid var(--line);
+      padding-left: 40px;
+      animation: fadeDown 0.6s 0.05s ease both;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      padding: 10px 20px 12px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      letter-spacing: 0.01em;
+    }
+
+    .tab-btn.active {
+      color: var(--ink);
+      border-bottom-color: var(--amber);
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--ink); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Quote section inside book card */
+    .quotes-toggle {
+      margin-top: 14px;
+      background: none;
+      border: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.2s;
+    }
+    .quotes-toggle:hover { color: var(--amber); }
+    .quotes-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+    .quotes-toggle.open .arrow { transform: rotate(90deg); }
+
+    .quotes-section {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+    }
+    .quotes-section.open { display: block; }
+
+    .quote-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .quote-entry {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .quote-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.7;
+      font-style: italic;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.6);
+      border-left: 3px solid var(--amber);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .book-item.completed .quote-text {
+      border-left-color: #3aad6a;
+    }
+
+    .quote-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #c4b89a;
+      margin-top: 3px;
+      padding-left: 12px;
+    }
+
+    .btn-quote-del {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 8px 2px;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+    .btn-quote-del:hover { color: var(--rust); }
+
+    .quote-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .quote-textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--line);
+      padding: 6px 2px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      resize: none;
+      min-height: 36px;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+    }
+    .quote-textarea::placeholder { color: #c4b89a; font-style: italic; }
+    .quote-textarea:focus { border-bottom-color: var(--amber); }
+
+    .btn-quote-save {
+      padding: 5px 13px;
+      background: transparent;
+      border: 1.5px solid var(--amber);
+      border-radius: 3px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--amber);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.18s, color 0.18s;
+      flex-shrink: 0;
+    }
+    .btn-quote-save:hover { background: var(--amber); color: #fff; }
+
+    /* ── 간직하는 문장 tab ── */
+    .passages-empty {
+      text-align: center;
+      padding: 56px 24px;
+      color: var(--muted);
+      font-size: 14px;
+      font-style: italic;
+      border: 1px dashed var(--line);
+      border-radius: 4px;
+    }
+
+    .passages-empty-icon {
+      font-size: 38px;
+      display: block;
+      margin-bottom: 12px;
+      opacity: 0.35;
+    }
+
+    .passages-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .passage-card {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--amber);
+      border-radius: 0 4px 4px 0;
+      padding: 20px 20px 16px 24px;
+      animation: slideIn 0.3s ease both;
+    }
+
+    .passage-card .passage-quote {
+      font-size: 15px;
+      line-height: 1.85;
+      color: var(--ink);
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+
+    .passage-card .passage-quote::before { content: '\201C'; color: var(--amber); font-size: 20px; line-height: 0; vertical-align: -4px; margin-right: 2px; }
+    .passage-card .passage-quote::after  { content: '\201D'; color: var(--amber); font-size: 20px; line-height: 0; vertical-align: -4px; margin-left: 2px; }
+
+    .passage-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .passage-book {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    .passage-book span { color: var(--amber); }
+
+    .passage-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #c4b89a;
+    }
+
+    .btn-passage-del {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 4px;
+      transition: color 0.2s;
+    }
+    .btn-passage-del:hover { color: var(--rust); }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+      font-size: 14px;
+      font-style: italic;
+      border: 1px dashed var(--line);
+      border-radius: 4px;
+      animation: fadeDown 0.5s ease both;
+    }
+
+    .empty-icon {
+      font-size: 36px;
+      display: block;
+      margin-bottom: 10px;
+      opacity: 0.4;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (max-width: 540px) {
+      .form-row { grid-template-columns: 1fr; }
+      .wrapper::before { display: none; }
+      .form-card { padding-left: 20px; }
+      .book-item { padding-left: 20px; }
+      .book-num { display: none; }
+      .stats { padding-left: 0; }
+      .section-title { padding-left: 0; }
+      header { padding-left: 0; }
+      .book-date { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <p class="label">My Reading Journal</p>
+    <h1>독서<span>기록</span>장</h1>
+    <p class="subtitle">읽은 책을 하나씩 기록해 보세요.</p>
+  </header>
+
+  <!-- Tab navigation -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('books', this)">📚 도서 목록</button>
+    <button class="tab-btn" onclick="switchTab('passages', this)">✨ 간직하는 문장</button>
+  </nav>
+
+  <!-- ── TAB: 도서 목록 ── -->
+  <div class="tab-panel active" id="tab-books">
+
+    <div class="form-card">
+      <div class="form-row">
+        <div class="field">
+          <label for="bookTitle">도서명</label>
+          <input type="text" id="bookTitle" placeholder="책 제목을 입력하세요" maxlength="80" />
+        </div>
+        <div class="field">
+          <label for="bookPages">페이지 수</label>
+          <input type="number" id="bookPages" placeholder="0" min="1" max="9999" />
+        </div>
+      </div>
+
+      <div class="genre-section">
+        <label>장르</label>
+        <div class="genre-tags" id="genreTagsContainer"></div>
+        <div class="genre-add-row">
+          <input type="text" class="genre-add-input" id="customGenreInput" placeholder="직접 입력 후 추가..." maxlength="20" />
+          <button class="genre-add-btn" onclick="addCustomGenre()">+ 추가</button>
+        </div>
+      </div>
+
+      <button class="btn-add" onclick="addBook()">📖 도서 추가</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-num" id="statCount">0</span>
+        <span class="stat-label">읽은 책</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" id="statPages">0</span>
+        <span class="stat-label">읽은 페이지</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" id="statAvg">0</span>
+        <span class="stat-label">평균 페이지</span>
+      </div>
+    </div>
+
+    <p class="section-title">도서 목록</p>
+    <ul class="book-list" id="bookList"></ul>
+    <div class="empty" id="emptyState">
+      <span class="empty-icon">📚</span>
+      아직 기록된 책이 없습니다.<br/>첫 번째 책을 추가해 보세요.
+    </div>
+
+  </div><!-- /tab-books -->
+
+  <!-- ── TAB: 간직하는 문장 ── -->
+  <div class="tab-panel" id="tab-passages">
+    <p class="section-title" style="margin-bottom:20px;">간직하는 문장</p>
+    <div id="passagesContainer"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-book-name" id="modalBookName"></div>
+    <div class="modal-title">오늘 몇 페이지 읽었나요?</div>
+    <div class="modal-field">
+      <label>오늘 읽은 페이지 수</label>
+      <input type="number" id="modalInput" min="0" placeholder="0"
+             onkeydown="if(event.key==='Enter') confirmUpdate(); if(event.key==='Escape') closeModal();" />
+    </div>
+    <div class="modal-hint" id="modalHint"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-modal-confirm" onclick="confirmUpdate()">진행률 업데이트</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let books = JSON.parse(localStorage.getItem('readingBooks') || '[]');
+
+  function save() {
+    localStorage.setItem('readingBooks', JSON.stringify(books));
+  }
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function updateStats() {
+    const count = books.length;
+    const totalPages = books.reduce((s, b) => s + (b.pages || 0), 0);
+    const totalRead = books.reduce((s, b) => s + (b.currentPage || 0), 0);
+    const avg = count ? Math.round(totalPages / count) : 0;
+    document.getElementById('statCount').textContent = count;
+    document.getElementById('statPages').textContent = totalRead.toLocaleString();
+    document.getElementById('statAvg').textContent = avg.toLocaleString();
+  }
+
+  function render() {
+    const list = document.getElementById('bookList');
+    const empty = document.getElementById('emptyState');
+    list.innerHTML = '';
+
+    if (books.length === 0) {
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      books.forEach((b, i) => {
+        const cur = b.currentPage || 0;
+        const total = b.pages || 0;
+        const pct = total > 0 ? Math.min(100, Math.round(cur / total * 100)) : 0;
+
+        const quotes = b.quotes || [];
+        const isDone = total > 0 && cur >= total;
+        const li = document.createElement('li');
+        li.className = 'book-item' + (isDone ? ' completed' : '');
+        li.innerHTML = `
+          <span class="book-num">${String(i+1).padStart(2,'0')}</span>
+          <div class="book-header">
+            <span class="book-title">${escHtml(b.title)}</span>
+            ${b.genre ? `<span class="book-genre">${escHtml(b.genre)}</span>` : ''}
+            ${isDone ? `<span class="check-badge"><svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>완독</span>` : ''}
+            <span class="book-date">${b.date}</span>
+            <button class="btn-delete" title="삭제" onclick="deleteBook(${i})">✕</button>
+          </div>
+          <div class="book-progress-row">
+            <div class="progress-wrap">
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width:${pct}%"></div>
+              </div>
+              <div class="progress-label">
+                <span>${cur.toLocaleString()}</span> / ${total ? total.toLocaleString() + ' p' : '—'} &nbsp;(${pct}%)
+              </div>
+            </div>
+            ${!isDone ? `<div class="update-controls"><button class="btn-update" onclick="openModal(${i})">업데이트</button></div>` : ''}
+          </div>
+          <button class="quotes-toggle" id="qtoggle_${i}" onclick="toggleQuotes(${i})">
+            <span class="arrow">▶</span>&nbsp;구절 메모 ${quotes.length > 0 ? `(${quotes.length})` : ''}
+          </button>
+          <div class="quotes-section" id="qsection_${i}">
+            <ul class="quote-list" id="qlist_${i}">
+              ${quotes.map((q, qi) => `
+                <li>
+                  <div class="quote-entry">
+                    <div>
+                      <div class="quote-text">${escHtml(q.text)}</div>
+                      <div class="quote-meta">${q.date}</div>
+                    </div>
+                    <button class="btn-quote-del" onclick="deleteQuote(${i},${qi})" title="삭제">✕</button>
+                  </div>
+                </li>`).join('')}
+            </ul>
+            <div class="quote-input-row">
+              <textarea class="quote-textarea" id="qinput_${i}" placeholder="마음에 드는 구절을 적어두세요..." rows="2"
+                onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)) saveQuote(${i})"></textarea>
+              <button class="btn-quote-save" onclick="saveQuote(${i})">저장</button>
+            </div>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+    updateStats();
+  }
+
+  let activeBookIdx = null;
+
+  function openModal(i) {
+    activeBookIdx = i;
+    const b = books[i];
+    const cur = b.currentPage || 0;
+    const total = b.pages || 0;
+    const remaining = total > 0 ? total - cur : null;
+
+    document.getElementById('modalBookName').textContent = b.title;
+    document.getElementById('modalHint').innerHTML = remaining !== null
+      ? `현재 <span>${cur.toLocaleString()}p</span> 읽음 &nbsp;·&nbsp; 최대 <span>${remaining.toLocaleString()}p</span> 입력 가능`
+      : `현재 <span>${cur.toLocaleString()}p</span> 읽음`;
+
+    const input = document.getElementById('modalInput');
+    input.value = '';
+    input.max = remaining !== null ? remaining : 9999;
+
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => input.focus(), 200);
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    activeBookIdx = null;
+  }
+
+  function confirmUpdate() {
+    if (activeBookIdx === null) return;
+    const i = activeBookIdx;
+    const todayPages = parseInt(document.getElementById('modalInput').value) || 0;
+
+    if (todayPages < 0) { showToast('0 이상의 숫자를 입력해 주세요.'); return; }
+
+    const b = books[i];
+    const total = b.pages || 0;
+    const cur = b.currentPage || 0;
+    const remaining = total > 0 ? total - cur : Infinity;
+
+    // 초과 방지: 오늘 읽은 페이지가 남은 페이지보다 많으면 차단
+    if (total > 0 && todayPages > remaining) {
+      showToast(`남은 페이지(${remaining.toLocaleString()}p)를 초과할 수 없어요.`);
+      const input = document.getElementById('modalInput');
+      input.value = remaining;
+      input.focus();
+      return;
+    }
+
+    const newCur = cur + todayPages;
+    books[i].currentPage = newCur;
+
+    save();
+    closeModal();
+    render();
+
+    const pct = total > 0 ? Math.round(newCur / total * 100) : 0;
+    if (total > 0 && newCur >= total) {
+      showToast('🎉 완독을 축하드립니다!');
+    } else {
+      showToast(`+${todayPages}p 추가 · 진행률 ${pct}% ✓`);
+    }
+  }
+
+  // Close modal on overlay click
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // ── Tab system ────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'passages') renderPassages();
+  }
+  // ──────────────────────────────────────────────────────────
+
+  // ── Quote (구절) functions ────────────────────────────────
+  function toggleQuotes(i) {
+    const section = document.getElementById(`qsection_${i}`);
+    const toggle  = document.getElementById(`qtoggle_${i}`);
+    const isOpen  = section.classList.toggle('open');
+    toggle.classList.toggle('open', isOpen);
+    if (isOpen) document.getElementById(`qinput_${i}`)?.focus();
+  }
+
+  function saveQuote(i) {
+    const ta = document.getElementById(`qinput_${i}`);
+    const text = ta.value.trim();
+    if (!text) return;
+    if (!books[i].quotes) books[i].quotes = [];
+    books[i].quotes.push({ text, date: today() });
+    save();
+    render();
+    // re-open the section after re-render
+    const section = document.getElementById(`qsection_${i}`);
+    const toggle  = document.getElementById(`qtoggle_${i}`);
+    if (section) { section.classList.add('open'); toggle.classList.add('open'); }
+    showToast('구절이 저장되었습니다 ✨');
+  }
+
+  function deleteQuote(bookIdx, quoteIdx) {
+    books[bookIdx].quotes.splice(quoteIdx, 1);
+    save();
+    render();
+    const section = document.getElementById(`qsection_${bookIdx}`);
+    const toggle  = document.getElementById(`qtoggle_${bookIdx}`);
+    if (section) { section.classList.add('open'); toggle.classList.add('open'); }
+    showToast('구절이 삭제되었습니다.');
+  }
+  // ──────────────────────────────────────────────────────────
+
+  // ── 간직하는 문장 tab render ──────────────────────────────
+  function renderPassages() {
+    const container = document.getElementById('passagesContainer');
+    const allQuotes = [];
+    books.forEach((b, bi) => {
+      (b.quotes || []).forEach((q, qi) => {
+        allQuotes.push({ text: q.text, date: q.date, bookTitle: b.title, bi, qi });
+      });
+    });
+    // newest first
+    allQuotes.sort((a, b) => b.date.localeCompare(a.date));
+
+    if (allQuotes.length === 0) {
+      container.innerHTML = `
+        <div class="passages-empty">
+          <span class="passages-empty-icon">✨</span>
+          아직 저장된 구절이 없어요.<br/>도서 목록에서 마음에 드는 문장을 기록해 보세요.
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="passages-grid">${allQuotes.map((q, idx) => `
+      <div class="passage-card">
+        <div class="passage-quote">${escHtml(q.text)}</div>
+        <div class="passage-footer">
+          <div class="passage-book">— <span>${escHtml(q.bookTitle)}</span></div>
+          <div class="passage-date">${q.date}</div>
+          <button class="btn-passage-del" onclick="deleteQuote(${q.bi},${q.qi}); renderPassages();" title="삭제">✕</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+  // ──────────────────────────────────────────────────────────
+
+  // ── Genre system ──────────────────────────────────────────
+  const DEFAULT_GENRES = ['소설', '에세이', 'SF', '판타지', '철학', '시', '역사', '자기계발', '경제/경영', '과학', '인문', '여행', '만화'];
+  let customGenres = JSON.parse(localStorage.getItem('customGenres') || '[]');
+  let selectedGenre = null;
+
+  function allGenres() {
+    return [...DEFAULT_GENRES, ...customGenres];
+  }
+
+  function renderGenreTags() {
+    const container = document.getElementById('genreTagsContainer');
+    container.innerHTML = '';
+    allGenres().forEach(g => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'genre-tag' + (DEFAULT_GENRES.includes(g) ? '' : ' custom-tag') + (selectedGenre === g ? ' selected' : '');
+      btn.textContent = g;
+      btn.onclick = () => {
+        selectedGenre = selectedGenre === g ? null : g;
+        renderGenreTags();
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  function addCustomGenre() {
+    const input = document.getElementById('customGenreInput');
+    const val = input.value.trim();
+    if (!val) return;
+    if (allGenres().includes(val)) {
+      selectedGenre = val;
+      renderGenreTags();
+      input.value = '';
+      return;
+    }
+    customGenres.push(val);
+    localStorage.setItem('customGenres', JSON.stringify(customGenres));
+    selectedGenre = val;
+    renderGenreTags();
+    input.value = '';
+  }
+
+  document.getElementById('customGenreInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCustomGenre();
+  });
+
+  renderGenreTags();
+  // ──────────────────────────────────────────────────────────
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function addBook() {
+    const titleEl = document.getElementById('bookTitle');
+    const pagesEl = document.getElementById('bookPages');
+    const title = titleEl.value.trim();
+    const pages = parseInt(pagesEl.value) || 0;
+
+    if (!title) {
+      titleEl.focus();
+      showToast('도서명을 입력해 주세요.');
+      return;
+    }
+
+    books.unshift({ title, pages, currentPage: 0, genre: selectedGenre || '', date: today() });
+    save();
+    render();
+    titleEl.value = '';
+    pagesEl.value = '';
+    selectedGenre = null;
+    renderGenreTags();
+    titleEl.focus();
+    showToast('도서가 추가되었습니다 ✓');
+  }
+
+  function deleteBook(i) {
+    books.splice(i, 1);
+    save();
+    render();
+    showToast('삭제되었습니다.');
+  }
+
+  // Enter key support
+  document.getElementById('bookTitle').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('bookPages').focus(); });
+  document.getElementById('bookPages').addEventListener('keydown', e => { if (e.key === 'Enter') addBook(); });
+
+  render();
+</script>
+</body>
+</html>
